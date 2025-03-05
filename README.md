@@ -110,7 +110,7 @@ airfine transform --prompt "Text to transform" [--context "System message"] [--p
 #### Options
 
 - `--prompt`, `-p`: Text to transform (if not provided, reads from stdin)
-- `--context`, `-c`: System message (optional, if not provided, no context will be sent to the LLM)
+- `--context`, `-c`: System message (optional) - This is treated as a higher-level instruction that guides the LLM's behavior and takes precedence over the prompt text
 - `--provider`, `-r`: LLM provider to use (optional, uses the first provider with a configured API key)
 - `--model`, `-m`: Model to use (optional, provider-specific default will be used if not specified)
 - `--quiet`, `-q`: Output only the result text without any logs (optional)
@@ -159,6 +159,9 @@ echo "This is text to improve" | airfine transform
 
 # Show before and after comparison
 echo "This is text to improve" | airfine transform --before-after
+
+# Combine --prompt with stdin input
+echo "This is the actual text to improve" | airfine transform --prompt "Improve this text by making it more professional:"
 ```
 
 ## Integration Examples
@@ -178,7 +181,7 @@ cat meeting_notes.md | airfine transform --prompt "Summarize these meeting notes
 cat document.txt | airfine transform --context "You are a professional editor. Improve this text." > improved_document.txt
 ```
 
-The CLI automatically reads from stdin when no `--prompt` option is provided, making it ideal for use in pipelines.
+The CLI automatically reads from stdin when no `--prompt` option is provided, making it ideal for use in pipelines. You can also combine `--prompt` with stdin input, where the prompt text is followed by the stdin content - useful for providing instructions along with the text to transform.
 
 ### Script Integration
 

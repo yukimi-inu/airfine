@@ -91,16 +91,30 @@ export async function transformCommand(options: TransformOptions): Promise<void>
     process.exit(1);
   }
 
-  // Read from stdin if no prompt is provided
+  // Initialize prompt text from options
   let promptText = options.prompt || '';
-  if (!promptText) {
+  
+  // Check if we should read from stdin (if stdin is not a TTY, it means data is being piped in)
+  let stdinText = '';
+  if (!process.stdin.isTTY) {
     if (!isQuietMode) {
-      console.log(chalk.blue('Reading prompt from stdin...'));
+      console.log(chalk.blue('Reading from stdin...'));
     }
-    promptText = await readFromStdin();
+    stdinText = await readFromStdin();
   }
+  
+  // Combine prompt and stdin if both are provided, or use whichever is available
+  if (promptText && stdinText) {
+    // Both prompt and stdin are provided, combine them
+    // This allows for use cases like: echo "text" | airfine transform --prompt "Improve this:"
+    promptText = `${promptText}\n\n${stdinText}`;
+  } else if (!promptText && stdinText) {
+    // Only stdin is provided
+    promptText = stdinText;
+  }
+  // If only promptText is provided, we already have it
 
-  // Check if prompt is provided (either via option or stdin)
+  // Check if we have any prompt to process
   if (!promptText) {
     console.error(chalk.red('No prompt specified. Use the --prompt option or pipe content to stdin.'));
     process.exit(1);
