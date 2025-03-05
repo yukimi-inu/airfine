@@ -5,7 +5,19 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 
 // Configuration file paths
-const CONFIG_DIR = path.join(os.homedir(), '.config', 'airfine');
+function getConfigDir(): string {
+  const platform = process.platform;
+  
+  if (platform === 'win32') {
+    // Windows: %APPDATA%\airfine
+    return path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'airfine');
+  } else {
+    // macOS/Linux: ~/.config/airfine
+    return path.join(os.homedir(), '.config', 'airfine');
+  }
+}
+
+const CONFIG_DIR = getConfigDir();
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
 // Configuration file type definition
@@ -61,7 +73,7 @@ export function loadConfig(): Config {
 export async function setupCommand(): Promise<void> {
   console.log(chalk.blue('airfine Setup'));
   console.log('Set up API keys for LLM providers.');
-  console.log(chalk.yellow('API keys will be saved to ~/.config/airfine/config.json'));
+  console.log(chalk.yellow(`API keys will be saved to ${CONFIG_FILE}`));
 
   const currentConfig = loadConfig();
 

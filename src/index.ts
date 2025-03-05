@@ -18,7 +18,7 @@ program.command('setup').description('Setup API keys for LLM providers').action(
 program
   .command('transform')
   .description('Transform text using LLM')
-  .option('-p, --prompt <text>', 'The prompt text to transform')
+  .option('-p, --prompt <text>', 'The prompt text to transform (if not provided, reads from stdin)')
   .option(
     '-c, --context <text>',
     'System context for the transformation',
@@ -27,7 +27,7 @@ program
   .option('-r, --provider <provider>', 'LLM provider to use (openai, claude, gemini)', '')
   .option('-q, --quiet', 'Output only the result text without any logs')
   .option('--raw', 'Alias for --quiet')
-  .option('-s, --stdin', 'Read prompt from stdin')
+  .option('-b, --before-after', 'Show before and after text')
   .action(transformCommand);
 
 // Add models command

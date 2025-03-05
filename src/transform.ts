@@ -13,7 +13,7 @@ interface TransformOptions {
   provider?: string;
   quiet?: boolean;
   raw?: boolean;
-  stdin?: boolean; // Flag to indicate if prompt should be read from stdin
+  beforeAfter?: boolean; // Flag to indicate if before/after display mode is enabled
 }
 
 /**
@@ -91,9 +91,9 @@ export async function transformCommand(options: TransformOptions): Promise<void>
     process.exit(1);
   }
 
-  // Read from stdin if specified or if no prompt is provided
+  // Read from stdin if no prompt is provided
   let promptText = options.prompt || '';
-  if (options.stdin || (!promptText && !process.stdin.isTTY)) {
+  if (!promptText) {
     if (!isQuietMode) {
       console.log(chalk.blue('Reading prompt from stdin...'));
     }
@@ -107,18 +107,21 @@ export async function transformCommand(options: TransformOptions): Promise<void>
   }
 
   // Determine which provider to use
-  let providerName = options.provider || config.defaultProvider || 'claude';
+  let providerName = options.provider || config.defaultProvider || '';
 
-  // If the specified provider is not configured, fall back to any configured provider
+  // If no provider specified or the specified provider is not configured,
+  // use any configured provider based on available API keys
   if (
+    !providerName ||
     (providerName === 'openai' && !config.openaiApiKey) ||
     (providerName === 'claude' && !config.claudeApiKey) ||
     (providerName === 'gemini' && !config.geminiApiKey)
   ) {
-    if (config.claudeApiKey) {
-      providerName = 'claude';
-    } else if (config.openaiApiKey) {
+    // Check which providers have API keys configured and use the first available one
+    if (config.openaiApiKey) {
       providerName = 'openai';
+    } else if (config.claudeApiKey) {
+      providerName = 'claude';
     } else if (config.geminiApiKey) {
       providerName = 'gemini';
     }
@@ -149,10 +152,18 @@ export async function transformCommand(options: TransformOptions): Promise<void>
 
     if (result) {
       // Output result to stdout
-      // In quiet mode, just output the raw result without newlines or formatting
       if (isQuietMode) {
+        // In quiet mode, just output the raw result without newlines or formatting
         process.stdout.write(result);
+      } else if (options.beforeAfter) {
+        // In before/after mode, show both the original prompt and the result
+        console.log(chalk.blue('\n=== Before ==='));
+        console.log(promptText);
+        console.log(chalk.green('\n=== After ==='));
+        console.log(result);
+        console.log(''); // Add an empty line at the end
       } else {
+        // Standard output mode
         console.log(`\n${result}\n`);
       }
     } else {

@@ -1,14 +1,15 @@
 import chalk from 'chalk';
-import { type Config } from '../setup';
-import { OpenAIProvider } from './openai';
-import { ClaudeProvider } from './claude';
-import { GeminiProvider } from './gemini';
+import type {Config} from '../setup';
+import {ClaudeProvider} from './claude';
+import {GeminiProvider} from './gemini';
+import {OpenAIProvider} from './openai';
 
 /**
  * Interface for LLM providers
  */
 export interface LLMProvider {
   transform(prompt: string, context: string | null, model: string): Promise<string | null>;
+
   getDefaultModel(config?: Config): string;
 }
 
