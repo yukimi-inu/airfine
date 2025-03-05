@@ -1,21 +1,45 @@
 # airfine: A Minimal LLM-based Text Refinement CLI
 
-Airfine is a lightweight, versatile CLI connector for LLM APIs (OpenAI, Claude, Gemini) that enables seamless text transformation through simple commands. It serves as an atomic building block that can be integrated with various tools and workflows to enhance text processing capabilities.
+![AIrfine Logo](docs/logo.png)
 
-## Why Airfine?
+AIrfine is a lightweight, versatile CLI connector for LLM APIs (OpenAI, Claude, Gemini) that enables seamless text transformation through simple commands. It serves as an atomic building block that can be integrated with various tools and workflows to enhance text processing capabilities.
 
-Airfine was designed with the following principles in mind:
+## Why AIrfine?
+
+AIrfine was designed with the following principles in mind:
 
 - **Simplicity**: Minimal interface with maximum flexibility
 - **Composability**: Works well with other tools in the Unix philosophy
 - **Integration**: Easy to incorporate into scripts, automation workflows, or GUI wrappers
 - **Extensibility**: Support for multiple LLM providers with a consistent interface
 
-Once set up, Airfine becomes a powerful component in your toolkit that can be accessed via shell commands or integrated into GUI applications, enabling you to easily incorporate LLM capabilities into your existing workflows.
+Once set up, AIrfine becomes a powerful component in your toolkit that can be accessed via shell commands or integrated into GUI applications, enabling you to easily incorporate LLM capabilities into your existing workflows.
+
+![AIrfine Example](docs/example.gif)
+
+## Quick Start
+
+You can use airfine without installation using npx:
+
+```bash
+npx airfine --help
+```
+
+> **Note**: If npx is not available on your system, you need to install Node.js (version 18.0.0 or higher) from [nodejs.org](https://nodejs.org/).
+>
+> The package is fully bundled, so no additional dependencies are needed when running with npx.
+
+### Example with npx
+
+```bash
+npx airfine transform --prompt "Improve this text" --context "Make it more professional"
+```
 
 ## Installation
 
-### Install from npm (after publishing)
+If you use airfine frequently, you may want to install it globally:
+
+### Install from npm
 
 ```bash
 npm install -g airfine
@@ -41,7 +65,32 @@ On first use, you need to configure API keys for the LLM providers:
 airfine setup
 ```
 
-Follow the prompts to enter your API keys. Keys are saved to `~/.config/airfine/config.json`.
+Follow the prompts to enter your API keys. For security, API keys are masked with asterisks (\*) as you type. Keys are saved to `~/.config/airfine/config.json`.
+
+You can also configure default settings:
+
+- **Default Provider**: Set which provider to use when none is specified
+- **Default Models**: Set which model to use for each provider when none is specified
+
+```bash
+# To set the default provider
+airfine setup
+# Select "Set default provider" from the menu
+
+# To set default models for each provider
+airfine setup
+# Select "Set default models" from the menu
+```
+
+### List Available Models
+
+To see which models are available with your API keys:
+
+```bash
+airfine models
+```
+
+This command queries each configured provider's API and displays a list of available models.
 
 ### Text Transformation
 
@@ -53,12 +102,13 @@ airfine transform --prompt "Text to transform" [--context "System message"] [--p
 
 #### Options
 
-- `--prompt`, `-p`: Text to transform (required)
-- `--context`, `-c`: System message (optional, default: "You are a skilled editor. Please improve the following text.")
+- `--prompt`, `-p`: Text to transform (required unless using stdin)
+- `--context`, `-c`: System message (optional, if not provided, no context will be sent to the LLM)
 - `--provider`, `-r`: LLM provider to use (optional, default: claude if configured, otherwise any available provider)
 - `--model`, `-m`: Model to use (optional, provider-specific default will be used if not specified)
 - `--quiet`, `-q`: Output only the result text without any logs (optional)
 - `--raw`: Alias for --quiet
+- `--stdin`, `-s`: Read prompt from stdin (optional, automatically detected if content is piped)
 
 ### Examples
 
@@ -94,9 +144,19 @@ airfine transform \
   --quiet > output.txt
 ```
 
+5. Read prompt from stdin:
+
+```bash
+# Using the --stdin flag
+echo "This is text to improve" | airfine transform --stdin
+
+# Automatically detected when piped
+echo "This is text to improve" | airfine transform
+```
+
 ## Integration Examples
 
-Airfine can be easily integrated with other tools and workflows:
+AIrfine can be easily integrated with other tools and workflows:
 
 ### Shell Pipelines
 
@@ -106,7 +166,12 @@ cat document.txt | airfine transform --prompt "Translate this to French" --quiet
 
 # Summarize meeting notes
 cat meeting_notes.md | airfine transform --prompt "Summarize these meeting notes in bullet points" --quiet
+
+# Process file content directly (stdin is automatically detected)
+cat document.txt | airfine transform --context "You are a professional editor. Improve this text." > improved_document.txt
 ```
+
+The CLI automatically detects when content is being piped in, so you don't need to use the `--stdin` flag explicitly in most cases.
 
 ### Script Integration
 
@@ -121,7 +186,7 @@ done
 
 ### GUI Wrappers
 
-Airfine's simple CLI interface makes it ideal for building GUI wrappers around it:
+AIrfine's simple CLI interface makes it ideal for building GUI wrappers around it:
 
 - Text editors with LLM-powered features
 - Desktop applications for content creation
@@ -139,8 +204,9 @@ Airfine's simple CLI interface makes it ideal for building GUI wrappers around i
 
 ### Anthropic (Claude)
 
-- claude-3.7-sonnet
-- claude-3.5-sonnet
+- claude-3-sonnet-latest
+- claude-3-opus-latest
+- claude-3-haiku-latest
 
 ### Google (Gemini)
 
@@ -257,11 +323,6 @@ MIT
 
 ## Future Enhancements
 
-- Anthropic and Google API implementations
 - Interactive chat mode (`airfine chat`)
 - Message history
-- Translation features
-- Multi-language support
-- Distribution via Brew, apt, winget, and as a single binary
-- Plugin system for custom transformations
-- WebSocket/REST API for remote access
+- Distribution via Brew, apt, and as a single binary

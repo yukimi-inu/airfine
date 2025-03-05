@@ -22,6 +22,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+tmp/
 
 # OS specific
 .DS_Store
