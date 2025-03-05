@@ -1,0 +1,91 @@
+# Airfine Project Guidelines
+
+## Project Overview
+
+Airfine is a minimal CLI tool for text refinement using LLM APIs (OpenAI, Claude, Gemini). It allows users to transform text through simple commands.
+
+## Architecture
+
+- **TypeScript-based CLI**: Built with Node.js and TypeScript
+- **Command Structure**: Uses Commander.js for CLI command parsing
+- **Provider Pattern**: Abstract LLMProvider interface with concrete implementations
+- **Configuration Management**: Stores API keys in ~/.config/airfine/config.json
+
+## Key Components
+
+1. **setup.ts**: Handles API key configuration and storage
+2. **transform.ts**: Implements text transformation logic and provider interfaces
+3. **index.ts**: Entry point that defines CLI commands
+
+## Code Patterns
+
+- **Provider Interface**: All LLM providers implement the LLMProvider interface
+- **Configuration**: Uses a typed Config interface for type safety
+- **Error Handling**: Consistent error handling patterns throughout
+- **Testing**: Vitest for unit testing with mocking
+
+## Development Practices
+
+- **Code Style**: Uses Biome for formatting (2-space indentation, semicolons)
+- **Testing**: Write tests for all new functionality
+- **Versioning**: Follow semantic versioning
+- **Documentation**: Update README.md for new features
+
+## Current Status
+
+- OpenAI implementation is complete
+- Claude and Gemini implementations are placeholders
+- Basic CLI commands (setup, transform) are implemented
+- GitHub Actions workflow for npm publishing is configured
+
+## Future Enhancements
+
+- Implement Claude and Gemini API integrations
+- Add interactive chat mode
+- Support message history
+- Add translation features
+- Add multi-language support
+- Distribute via package managers (Brew, apt, winget)
+
+## Publishing
+
+- Package is published to npm when a version tag is pushed
+- Requires NPM_TOKEN secret in GitHub repository
+- Version in package.json must match the tag version
+
+## Cline Instructions
+
+When working with this project, Cline should:
+
+1. **Understand the Provider Pattern**: Recognize the LLMProvider interface and how concrete implementations work
+2. **Follow Code Style**: Use Biome formatting rules (2-space indentation, semicolons)
+3. **Maintain Type Safety**: Ensure proper TypeScript typing throughout the codebase
+4. **Write Tests**: Create tests for any new functionality
+5. **Update Documentation**: Keep README.md up to date with new features
+6. **Consider Future Enhancements**: Be aware of planned features when making changes
+
+## Common Tasks
+
+### Adding a New Provider
+
+1. Create a new class that implements the LLMProvider interface
+2. Add the provider to the createProvider factory function
+3. Update the Config interface to include the new provider's API key
+4. Add the provider to the setup command's provider selection
+5. Update the getModelSuggestions function with the provider's models
+6. Write tests for the new provider
+
+### Adding a New Command
+
+1. Add the command to index.ts using Commander.js
+2. Create a new file for the command's implementation
+3. Follow the existing pattern of exporting a command function
+4. Write tests for the new command
+5. Update README.md with the new command's usage
+
+### Publishing a New Version
+
+1. Update the version in package.json
+2. Run tests: `npm test`
+3. Create and push a new tag: `git tag v1.0.0 && git push origin v1.0.0`
+4. GitHub Actions will automatically publish to npm

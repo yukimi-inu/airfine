@@ -1,0 +1,32 @@
+# Source code
+src/
+
+# Tests
+test/
+tests/
+__tests__/
+
+# Configuration files
+.github/
+.vscode/
+.editorconfig
+.eslintrc
+.prettierrc
+tsconfig.json
+
+# Git files
+.git/
+.gitignore
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+.github/workflows/
+
+# Logs
+logs/
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db

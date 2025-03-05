@@ -1,0 +1,71 @@
+{
+  "name": "airfine",
+  "version": "0.1.0",
+  "description": "A minimal LLM-based text refinement CLI",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "airfine": "bin/cli.js"
+  },
+  "files": [
+    "dist/",
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=cjs",
+    "postbuild": "mkdir -p bin && echo '#!/usr/bin/env node\\nprocess.argv.unshift(\"--no-deprecation\");\\nrequire(\"../dist/index.js\");' > bin/cli.js && chmod +x bin/cli.js",
+    "start": "node --no-deprecation dist/index.js",
+    "dev": "ts-node --no-deprecation src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build && npm test",
+    "lint": "biome lint ./src",
+    "format": "biome format --write ./src",
+    "check": "biome check --write --unsafe ./src"
+  },
+  "keywords": [
+    "cli",
+    "openai",
+    "llm",
+    "text",
+    "refinement",
+    "ai",
+    "gpt",
+    "claude",
+    "gemini"
+  ],
+  "author": "yukimi-inu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yukimi-inu/airfine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yukimi-inu/airfine/issues"
+  },
+  "homepage": "https://github.com/yukimi-inu/airfine#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "inquirer": "^8.2.5",
+    "openai": "^4.28.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/inquirer": "^8.2.6",
+    "@types/node": "^20.11.19",
+    "esbuild": "^0.19.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.1"
+  }
+}
