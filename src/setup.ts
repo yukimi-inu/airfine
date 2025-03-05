@@ -14,6 +14,11 @@ export interface Config {
   claudeApiKey?: string;
   geminiApiKey?: string;
   defaultProvider?: 'openai' | 'claude' | 'gemini';
+  defaultModels?: {
+    openai?: string;
+    claude?: string;
+    gemini?: string;
+  };
 }
 
 /**
@@ -67,10 +72,11 @@ export async function setupCommand(): Promise<void> {
       name: 'provider',
       message: 'Select a provider to configure:',
       choices: [
-        { name: 'OpenAI (GPT-3.5, GPT-4)', value: 'openai' },
+        { name: 'OpenAI', value: 'openai' },
         { name: 'Anthropic (Claude)', value: 'claude' },
         { name: 'Google (Gemini)', value: 'gemini' },
         { name: 'Set default provider', value: 'default' },
+        { name: 'Set default models', value: 'defaultModels' },
       ],
     },
   ]);
@@ -83,7 +89,7 @@ export async function setupCommand(): Promise<void> {
         name: 'defaultProvider',
         message: 'Select the default provider to use:',
         choices: [
-          { name: 'OpenAI (GPT-3.5, GPT-4)', value: 'openai' },
+          { name: 'OpenAI', value: 'openai' },
           { name: 'Anthropic (Claude)', value: 'claude' },
           { name: 'Google (Gemini)', value: 'gemini' },
         ],
@@ -94,6 +100,56 @@ export async function setupCommand(): Promise<void> {
     currentConfig.defaultProvider = defaultAnswer.defaultProvider;
     saveConfig(currentConfig);
     console.log(chalk.green(`Default provider set to ${defaultAnswer.defaultProvider}!`));
+    return;
+  }
+
+  if (providerAnswer.provider === 'defaultModels') {
+    // Initialize defaultModels if it doesn't exist
+    if (!currentConfig.defaultModels) {
+      currentConfig.defaultModels = {};
+    }
+
+    // Default model setting for OpenAI
+    if (currentConfig.openaiApiKey) {
+      const openaiAnswer = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'defaultModel',
+          message: 'Enter default model for OpenAI:',
+          default: currentConfig.defaultModels.openai || 'gpt-4o',
+        },
+      ]);
+      currentConfig.defaultModels.openai = openaiAnswer.defaultModel;
+    }
+
+    // Default model setting for Claude
+    if (currentConfig.claudeApiKey) {
+      const claudeAnswer = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'defaultModel',
+          message: 'Enter default model for Claude:',
+          default: currentConfig.defaultModels.claude || 'claude-3-7-sonnet-latest',
+        },
+      ]);
+      currentConfig.defaultModels.claude = claudeAnswer.defaultModel;
+    }
+
+    // Default model setting for Gemini
+    if (currentConfig.geminiApiKey) {
+      const geminiAnswer = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'defaultModel',
+          message: 'Enter default model for Gemini:',
+          default: currentConfig.defaultModels.gemini || 'gemini-2.0-flash',
+        },
+      ]);
+      currentConfig.defaultModels.gemini = geminiAnswer.defaultModel;
+    }
+
+    saveConfig(currentConfig);
+    console.log(chalk.green('Default models saved!'));
     return;
   }
 
@@ -127,7 +183,7 @@ export async function setupCommand(): Promise<void> {
 
   const keyAnswer = await inquirer.prompt([
     {
-      type: 'input',
+      type: 'password',
       name: 'apiKey',
       message: keyPrompt,
       default: currentConfig[keyName as keyof Config] || '',
@@ -140,6 +196,7 @@ export async function setupCommand(): Promise<void> {
         }
         return true;
       },
+      mask: '*',
     },
   ]);
 

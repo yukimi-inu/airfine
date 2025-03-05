@@ -38,7 +38,7 @@ describe('transform module', () => {
 
     it('should return Claude models for claude provider', () => {
       const models = getModelSuggestions('claude');
-      expect(models).toEqual(['claude-3.7-sonnet', 'claude-3.5-sonnet']);
+      expect(models).toEqual(['claude-3-7-sonnet-latest', 'claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest']);
     });
 
     it('should return Gemini models for gemini provider', () => {

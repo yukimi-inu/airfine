@@ -1,6 +1,9 @@
 import chalk from 'chalk';
-import OpenAI from 'openai';
 import { type Config, loadConfig } from './setup';
+import { createProvider, getModelSuggestions } from './providers';
+import { fetchOpenAIModels } from './providers/openai';
+import { fetchClaudeModels } from './providers/claude';
+import { fetchGeminiModels } from './providers/gemini';
 
 // Transform command options type definition
 interface TransformOptions {
@@ -10,150 +13,66 @@ interface TransformOptions {
   provider?: string;
   quiet?: boolean;
   raw?: boolean;
+  stdin?: boolean; // Flag to indicate if prompt should be read from stdin
 }
 
 /**
- * Interface for LLM providers
+ * Fetch available models from all configured providers
  */
-interface LLMProvider {
-  transform(prompt: string, context: string, model: string): Promise<string | null>;
-  getDefaultModel(): string;
+export async function fetchAvailableModels(config: Config): Promise<Record<string, string[]>> {
+  const result: Record<string, string[]> = {};
+  const promises: Promise<void>[] = [];
+
+  if (config.openaiApiKey) {
+    promises.push(
+      fetchOpenAIModels(config.openaiApiKey).then((models) => {
+        result.openai = models;
+      })
+    );
+  }
+
+  if (config.claudeApiKey) {
+    promises.push(
+      fetchClaudeModels(config.claudeApiKey).then((models) => {
+        result.claude = models;
+      })
+    );
+  }
+
+  if (config.geminiApiKey) {
+    promises.push(
+      fetchGeminiModels(config.geminiApiKey).then((models) => {
+        result.gemini = models;
+      })
+    );
+  }
+
+  await Promise.all(promises);
+  return result;
 }
 
 /**
- * OpenAI provider implementation
+ * Read input from stdin
  */
-class OpenAIProvider implements LLMProvider {
-  private apiKey: string;
-
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  async transform(prompt: string, context: string, model: string): Promise<string | null> {
-    const openai = new OpenAI({
-      apiKey: this.apiKey,
-    });
-
-    const response = await openai.chat.completions.create({
-      model: model || this.getDefaultModel(),
-      messages: [
-        {
-          role: 'developer',
-          content: context,
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-    });
-
-    return response.choices[0]?.message?.content || null;
-  }
-
-  getDefaultModel(): string {
-    return 'gpt-4o';
-  }
-}
-
-/**
- * Claude provider implementation
- * Note: This is a placeholder. Actual implementation requires Anthropic API client.
- */
-class ClaudeProvider implements LLMProvider {
-  private apiKey: string;
-
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  async transform(prompt: string, context: string, model: string): Promise<string | null> {
-    // TODO: Implement Claude API integration
-    console.log(chalk.yellow('Claude API integration is not yet implemented.'));
-    console.log(chalk.yellow('This is a placeholder for future implementation.'));
-
-    // For now, return a message indicating this is not implemented
-    return 'Claude API integration is not yet implemented. Please use OpenAI provider for now.';
-  }
-
-  getDefaultModel(): string {
-    return 'claude-3.7-sonnet';
-  }
-}
-
-/**
- * Gemini provider implementation
- * Note: This is a placeholder. Actual implementation requires Google AI API client.
- */
-class GeminiProvider implements LLMProvider {
-  private apiKey: string;
-
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
-  async transform(prompt: string, context: string, model: string): Promise<string | null> {
-    // TODO: Implement Gemini API integration
-    console.log(chalk.yellow('Gemini API integration is not yet implemented.'));
-    console.log(chalk.yellow('This is a placeholder for future implementation.'));
-
-    // For now, return a message indicating this is not implemented
-    return 'Gemini API integration is not yet implemented. Please use OpenAI provider for now.';
-  }
-
-  getDefaultModel(): string {
-    return 'gemini-2.0-flash';
-  }
-}
-
-/**
- * Factory function to create the appropriate provider
- */
-function createProvider(providerName: string, config: Config): LLMProvider | null {
-  switch (providerName) {
-    case 'openai':
-      if (!config.openaiApiKey) {
-        console.error(chalk.red('OpenAI API key not found. Run `airfine setup` to configure.'));
-        return null;
-      }
-      return new OpenAIProvider(config.openaiApiKey);
-
-    case 'claude':
-      if (!config.claudeApiKey) {
-        console.error(chalk.red('Claude API key not found. Run `airfine setup` to configure.'));
-        return null;
-      }
-      return new ClaudeProvider(config.claudeApiKey);
-
-    case 'gemini':
-      if (!config.geminiApiKey) {
-        console.error(chalk.red('Gemini API key not found. Run `airfine setup` to configure.'));
-        return null;
-      }
-      return new GeminiProvider(config.geminiApiKey);
-
-    default:
-      console.error(chalk.red(`Unknown provider: ${providerName}`));
-      return null;
-  }
-}
-
-/**
- * Get model suggestions based on provider
- */
-export function getModelSuggestions(provider: string): string[] {
-  switch (provider) {
-    case 'openai':
-      return ['gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o3-mini'];
-    case 'claude':
-      return ['claude-3.7-sonnet', 'claude-3.5-sonnet'];
-    case 'gemini':
-      return ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro'];
-    default:
-      return [];
-  }
+async function readFromStdin(): Promise<string> {
+  return new Promise<string>((resolve) => {
+    let data = '';
+    
+    // Check if stdin is connected to a terminal (TTY)
+    // If it's not, it means data is being piped in
+    if (!process.stdin.isTTY) {
+      process.stdin.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      process.stdin.on('end', () => {
+        resolve(data.trim());
+      });
+    } else {
+      // If stdin is a TTY, there's no piped data
+      resolve('');
+    }
+  });
 }
 
 /**
@@ -172,9 +91,18 @@ export async function transformCommand(options: TransformOptions): Promise<void>
     process.exit(1);
   }
 
-  // Check if prompt is provided
-  if (!options.prompt) {
-    console.error(chalk.red('No prompt specified. Use the --prompt option.'));
+  // Read from stdin if specified or if no prompt is provided
+  let promptText = options.prompt || '';
+  if (options.stdin || (!promptText && !process.stdin.isTTY)) {
+    if (!isQuietMode) {
+      console.log(chalk.blue('Reading prompt from stdin...'));
+    }
+    promptText = await readFromStdin();
+  }
+
+  // Check if prompt is provided (either via option or stdin)
+  if (!promptText) {
+    console.error(chalk.red('No prompt specified. Use the --prompt option or pipe content to stdin.'));
     process.exit(1);
   }
 
@@ -214,8 +142,8 @@ export async function transformCommand(options: TransformOptions): Promise<void>
 
     // Transform text
     const result = await provider.transform(
-      options.prompt || '',
-      options.context || 'You are a skilled editor. Please improve the following text.',
+      promptText,
+      options.context || null,
       model,
     );
 
@@ -244,3 +172,6 @@ export async function transformCommand(options: TransformOptions): Promise<void>
     process.exit(1);
   }
 }
+
+// Re-export getModelSuggestions for use in other modules
+export { getModelSuggestions };
