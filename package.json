@@ -1,6 +1,6 @@
 {
   "name": "airfine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A minimal LLM-based text refinement CLI",
   "main": "dist/index.js",
   "bin": {
